@@ -16,13 +16,13 @@ class RegisterController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:128',
             'email' => 'required|email|max:128|unique:users',
+            'phone' => 'required|regex:/((^(\+84|84|0|0084){1})(3|5|7|8|9))+([0-9]{8})$/|unique:users',
             'schoolName' => 'required|string|max:128',
             'schoolClass' => 'required|string|max:5',
             'password' => 'required|string|max:32|confirmed',
             'birthday' => 'required|max:20',
             'role'     => 'required|integer|min:1|max:1',
         ]);
-
         if ($validator->fails()) {
             return response()->json([
                 'isError' => true,
@@ -38,6 +38,7 @@ class RegisterController extends Controller
             $User->schoolClass = $request->schoolClass;
             $User->birthday = $request->birthday;
             $User->role_id = $request->role;
+            $User->phone = $request->phone;
             $User->save();
             return response()->json([
                 'isError' => false,
