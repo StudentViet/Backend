@@ -19,7 +19,8 @@ class RegisterController extends Controller
             'schoolName' => 'required|string|max:128',
             'schoolClass' => 'required|string|max:5',
             'password' => 'required|string|max:32|confirmed',
-            'birthday' => 'required|max:20'
+            'birthday' => 'required|max:20',
+            'role'     => 'required|integer|min:1|max:1',
         ]);
 
         if ($validator->fails()) {
@@ -36,7 +37,7 @@ class RegisterController extends Controller
             $User->schoolName = $request->schoolName;
             $User->schoolClass = $request->schoolClass;
             $User->birthday = $request->birthday;
-            $User->role_id = (int) $request->role;
+            $User->role_id = $request->role;
             $User->save();
             return response()->json([
                 'isError' => false,
