@@ -2,7 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\Auth\LoginController;
+use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\User\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +18,12 @@ use App\Http\Controllers\Api\UserController;
 */
 
 Route::prefix('auth')->group(function () {
-    Route::post('login', [UserController::class, 'login'])->name('auth.login');
-    Route::post('register', [UserController::class, 'register'])->name('auth.register');
+    Route::post('login', [LoginController::class, 'handle'])->name('auth.login');
+    Route::post('register', [RegisterController::class, 'handle'])->name('auth.register');
+});
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::prefix('user')->group(function () {
+        Route::get('', [UserController::class, 'UserInfo'])->name('userInfo');
+    });
 });
