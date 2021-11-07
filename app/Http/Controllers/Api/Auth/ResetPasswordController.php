@@ -25,14 +25,16 @@ class ResetPasswordController extends Controller
             ]);
         } else {
             $User = User::where([
-                'token' => $request->token
+                'email' => DB::table('password_resets')->where([
+                    'token' => $request->token,
+                ])->first()->email
             ]);
             if ($User->count() > 0) {
                 if (Carbon::now()->lessThan(DB::table('password_resets')->where([
                     'token' => $request->token,
                     'email' => $User->first()->email
                 ])->first()->expires_at)) {
-                    $User::update([
+                    $User->update([
                         'password'  => bcrypt($request->password)
                     ]);
                     DB::table('password_resets')->where([
