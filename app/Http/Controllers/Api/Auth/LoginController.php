@@ -23,7 +23,10 @@ class LoginController extends Controller
                 'message' => $validator->errors()->first()
             ]);
         } else {
-            if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+
+            $fieldType = filter_var($request->type, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+            if (Auth::attempt([$fieldType => $request->user, 'password' => $request->password])) {
                 $token = $request->user()->createToken('Access Token');
                 return response()->json([
                     'isError' => false,
