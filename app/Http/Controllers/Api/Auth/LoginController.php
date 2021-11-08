@@ -18,6 +18,7 @@ class LoginController extends Controller
         ]);
 
         if ($validator->fails()) {
+
             return response()->json([
                 'isError' => true,
                 'message' => $validator->errors()->first()
