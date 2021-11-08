@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\Auth\ForgotController;
 use App\Http\Controllers\Api\User\UserController;
 use App\Http\Controllers\Api\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\ClassRoom\ClassRoomController;
-use App\Models\ClassRoom;
+use App\Http\Controllers\Api\ClassRoom\ScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +31,9 @@ Route::prefix('auth')->middleware(['guest'])->group(function () {
 Route::middleware(['auth:api'])->group(function () {
     Route::get('user', [UserController::class, 'UserInfo'])->name('userInfo');
     Route::prefix('classRoom')->group(function () {
+        Route::prefix('schedule')->group(function () {
+            Route::get('get/{idClass}', [ScheduleController::class, 'get'])->name('classRoom.schedule.get');
+        });
         Route::get('list', [ClassRoomController::class, 'index'])->name('classRoom.index');
         Route::get('join/{idClass}', [ClassRoomController::class, 'join'])->name('classRoom.join');
         Route::get('leave/{idClass}', [ClassRoomController::class, 'leave'])->name('classRoom.leave');
