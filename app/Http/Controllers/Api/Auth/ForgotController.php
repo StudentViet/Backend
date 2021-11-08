@@ -24,7 +24,7 @@ class ForgotController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'isError' => true,
-                'messages' => [$validator->errors()]
+                'message' => $validator->errors()->first()
             ]);
         } else {
             if (User::whereEmail($request->email)->count() > 0) {

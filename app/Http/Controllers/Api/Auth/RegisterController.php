@@ -16,17 +16,17 @@ class RegisterController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:128',
             'email' => 'required|email|max:128|unique:users',
-            'phone' => 'required|regex:/((^(\+84|84|0|0084){1})(3|5|7|8|9))+([0-9]{8})$/|unique:users',
+            'phone' => 'required|regex:/^0[0-9]{8}$/|unique:users',
             'schoolName' => 'required|string|max:128',
             'schoolClass' => 'required|string|max:5',
             'password' => 'required|string|max:32|confirmed',
             'birthday' => 'required|max:20',
-            'role'     => 'required|integer|min:1|max:1',
+            'role'     => 'required|integer|min:1|max:2',
         ]);
         if ($validator->fails()) {
             return response()->json([
                 'isError' => true,
-                'messages' => [$validator->errors()]
+                'message' => $validator->errors()->first()
             ]);
         } else {
             $User = new User;
