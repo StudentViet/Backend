@@ -13,7 +13,7 @@ class LoginController extends Controller
     public function handle(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|max:128',
+            'user' => 'required|string|max:128',
             'password' => 'required|string|max:32',
         ]);
 
@@ -25,7 +25,7 @@ class LoginController extends Controller
             ]);
         } else {
 
-            $fieldType = filter_var($request->type, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+            $fieldType = filter_var($request->user, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
             if (Auth::attempt([$fieldType => $request->user, 'password' => $request->password])) {
                 $token = $request->user()->createToken('Access Token');
