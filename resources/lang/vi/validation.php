@@ -162,6 +162,8 @@ return [
         'title'                 => 'tiêu đề',
         'username'              => 'tên đăng nhập',
         'year'                  => 'năm',
-        'role'                  => 'vai trò'
+        'role'                  => 'vai trò',
+        'user'                  => 'tên người dùng',
+        'idClass'               => 'mã phòng học'
     ],
 ];

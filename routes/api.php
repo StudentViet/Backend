@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\ForgotController;
 use App\Http\Controllers\Api\User\UserController;
 use App\Http\Controllers\Api\Auth\ResetPasswordController;
+use App\Http\Controllers\Api\ClassRoom\ClassRoomController;
+use App\Models\ClassRoom;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,7 +29,15 @@ Route::prefix('auth')->middleware(['guest'])->group(function () {
 });
 
 Route::middleware(['auth:api'])->group(function () {
-    Route::prefix('user')->group(function () {
-        Route::get('', [UserController::class, 'UserInfo'])->name('userInfo');
+    Route::get('user', [UserController::class, 'UserInfo'])->name('userInfo');
+    Route::prefix('classRoom')->group(function () {
+        Route::get('list', [ClassRoomController::class, 'index'])->name('classRoom.index');
+        Route::get('join/{idClass}', [ClassRoomController::class, 'join'])->name('classRoom.join');
+        Route::get('leave/{idClass}', [ClassRoomController::class, 'leave'])->name('classRoom.leave');
+        Route::post('add', [ClassRoomController::class, 'invite'])->name('classRoom.invite');
+        Route::post('kick', [ClassRoomController::class, 'kick'])->name('classRoom.kick');
+        Route::post('create', [ClassRoomController::class, 'create'])->name('classRoom.create');
+        Route::delete('delete', [ClassRoomController::class, 'delete'])->name('classRoom.delete');
+        Route::get('show/{idClass}', [ClassRoomController::class, 'show'])->name('classRoom.show');
     });
 });

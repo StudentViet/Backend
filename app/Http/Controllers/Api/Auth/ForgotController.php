@@ -33,26 +33,18 @@ class ForgotController extends Controller
                     'url' => config('app.url') . '/auth/reset-password/' . $token,
                     'name'  => User::whereEmail($request->email)->first()->name
                 ];
+                DB::table('password_resets')->insert([
+                    'email' => $request->email,
+                    'token' => $token,
+                    'expires_at' => Carbon::now()->addMinutes(5),
+                    'created_at' => Carbon::now(),
+                ]);
 
-                try {
-                    DB::table('password_resets')->insert([
-                        'email' => $request->email,
-                        'token' => $token,
-                        'expires_at' => Carbon::now()->addMinutes(5),
-                        'created_at' => Carbon::now(),
-                    ]);
-
-                    Mail::to($request->email)->send(new OfferMail($offer));
-                    return response()->json([
-                        'iserror'   => false,
-                        'message'   => 'Đã gửi liên kết lấy lại mật khẩu qua email của bạn'
-                    ]);
-                } catch (Exception $ex) {
-                    return response()->json([
-                        'iserror'   => true,
-                        'message'   => $ex
-                    ]);
-                }
+                Mail::to($request->email)->send(new OfferMail($offer));
+                return response()->json([
+                    'isError'   => false,
+                    'message'   => 'Đã gửi liên kết lấy lại mật khẩu qua email của bạn'
+                ]);
             } else {
                 return response()->json([
                     'isError'   => true,
