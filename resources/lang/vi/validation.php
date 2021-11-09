@@ -164,6 +164,9 @@ return [
         'year'                  => 'năm',
         'role'                  => 'vai trò',
         'user'                  => 'tên người dùng',
-        'idClass'               => 'mã phòng học'
+        'idClass'               => 'tên phòng học',
+        'nameExercise'          => 'tên bài tập',
+        'nameClass'             => 'tên lớp học',
+        'file'                  => 'tệp bài tập'
     ],
 ];

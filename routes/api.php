@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\User\UserController;
 use App\Http\Controllers\Api\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\ClassRoom\ClassRoomController;
 use App\Http\Controllers\Api\ClassRoom\ScheduleController;
-
+use App\Http\Controllers\Api\ClassRoom\ExamController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -38,6 +38,14 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('delete/{idClass}', [ScheduleController::class, 'delete'])->name('classRoom.schedule.create');
         });
 
+        Route::prefix('exercise')->group(function () {
+            Route::get('list', [ExamController::class, 'getList'])->name('classRoom.exam.list');
+            Route::post('create', [ExamController::class, 'create'])->name('classRoom.exam.create');
+            Route::get('show/{idExam}', [ExamController::class, 'show'])->name('classRoom.exam.show');
+            Route::get('delete/{idExam}', [ExamController::class, 'delete'])->name('classRoom.exam.delete');
+            Route::get('downloadFile/{filename}', [ExamController::class, 'downloadFile'])->name('classRoom.exam.downloadfile');
+        });
+
         Route::get('list', [ClassRoomController::class, 'getList'])->name('classRoom.index');
         Route::get('join/{idClass}', [ClassRoomController::class, 'join'])->name('classRoom.join');
         Route::get('leave/{idClass}', [ClassRoomController::class, 'leave'])->name('classRoom.leave');
@@ -46,5 +54,6 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('create', [ClassRoomController::class, 'create'])->name('classRoom.create');
         Route::get('delete/{idClass}', [ClassRoomController::class, 'delete'])->name('classRoom.delete');
         Route::get('show/{idClass}', [ClassRoomController::class, 'show'])->name('classRoom.show');
+        //
     });
 });

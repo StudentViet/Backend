@@ -33,14 +33,30 @@ class ClassRoomController extends Controller
     public function getList()
     {
         $arrayClassRoom = [];
+        $arrayStudent = [];
         $ClassRoom = new ClassRoom();
         $count = 0;
         foreach ($ClassRoom->get() as $row) {
             if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
-                $arrayClassRoom = Arr::prepend($arrayClassRoom, $row);
+                $data = json_decode($row->data, true);
+                $arrayStudent[$data[$count]] = [
+                    'name'  => User::whereEmail($data[$count])->first()->name,
+                    'email' => User::whereEmail($data[$count])->first()->email,
+                ];
                 $count++;
             }
         }
+
+        $count = 0;
+        foreach ($ClassRoom->get() as $row) {
+            if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
+                unset($row['data']);
+                $arrayClassRoom = Arr::prepend($arrayClassRoom, $row);
+
+                $count++;
+            }
+        }
+        $arrayClassRoom = Arr::prepend($arrayClassRoom, ['data' => $arrayStudent]);
         return response()->json([
             'isError'   => $count != 0 ? false : true,
             'message'   => $count != 0 ? 'Lấy danh sách phòng học thành công' : 'Bạn chưa tham gia phòng học nào',
@@ -73,7 +89,7 @@ class ClassRoomController extends Controller
 
                     return response()->json([
                         'isError'   => false,
-                        'message'   => 'Tham gia lớp học thành công'
+                        'message'   => 'Tham gia phòng học thành công'
                     ]);
                 }
             } else {
@@ -88,7 +104,7 @@ class ClassRoomController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'  => 'required|max:255',
+            'nameClass'  => 'required|string|max:255',
             'data'  => 'required|json'
         ]);
         if ($validator->fails()) {
@@ -107,9 +123,12 @@ class ClassRoomController extends Controller
                 }
                 $idClass = \Illuminate\Support\Str::uuid();
                 $ClassRoom = new ClassRoom;
+                if ($ClassRoom->where('idClass', $idClass)->count() > 0) {
+                    $idClass = \Illuminate\Support\Str::uuid();
+                }
                 $ClassRoom->idClass = $idClass;
                 $ClassRoom->userId = Auth::user()->id;
-                $ClassRoom->name = $request->name;
+                $ClassRoom->name = $request->nameClass;
                 $ClassRoom->data = json_encode($arrayStudent);
                 $ClassRoom->save();
                 return response()->json([
@@ -126,20 +145,17 @@ class ClassRoomController extends Controller
         }
     }
 
-    public function leave(Request $request)
+    public function leave($idClass)
     {
-        $validator = Validator::make($request->all(), [
-            'idClass' => 'required|max:64',
-        ]);
 
-        if ($validator->fails()) {
+        if (!$idClass) {
 
             return response()->json([
                 'isError' => true,
-                'message' => $validator->errors()->first()
+                'message' => 'Trường mã phòng học không được bỏ trống'
             ]);
         } else {
-            $ClassRoom = ClassRoom::where('idClass', $request->idClass);
+            $ClassRoom = ClassRoom::where('idClass', $idClass);
             if ($ClassRoom->count() > 0) {
                 $arrayStudent = json_decode($ClassRoom->first()->data, true);
 
@@ -150,7 +166,7 @@ class ClassRoomController extends Controller
                     ]);
                 } else {
                     $i = 0;
-                    foreach ($arrayStudent as $key => $value) {
+                    foreach ($arrayStudent as $value) {
                         if ($value == Auth::user()->email) {
                             unset($arrayStudent[$i]);
                             break;
@@ -189,45 +205,51 @@ class ClassRoomController extends Controller
                 'message' => $validator->errors()->first()
             ]);
         } else {
+            if (User::whereEmail('email', $request->email)->count() > 0) {
+                if (Auth::user()->role_admin == 1) {
+                    $ClassRoom = ClassRoom::where('idClass', $request->idClass);
+                    if ($ClassRoom->count() > 0) {
+                        if ($ClassRoom->where('userId', Auth::user()->id)->count() > 0) {
+                            $arrayStudent = json_decode($ClassRoom->first()->data, true);
 
-            if (Auth::user()->role_admin == 1) {
-                $ClassRoom = ClassRoom::where('idClass', $request->idClass);
-                if ($ClassRoom->count() > 0) {
-                    if ($ClassRoom->where('userId', Auth::user()->id)->count() > 0) {
-                        $arrayStudent = json_decode($ClassRoom->first()->data, true);
+                            if (in_array($request->email, $arrayStudent)) {
+                                return response()->json([
+                                    'isError'   => true,
+                                    'message'   => 'Thành viên này đã ở trong phòng học'
+                                ]);
+                            } else {
+                                $arrayStudent = Arr::prepend($arrayStudent, $request->email);
 
-                        if (in_array($request->email, $arrayStudent)) {
+                                $ClassRoom->update([
+                                    'data'  => json_encode($arrayStudent)
+                                ]);
+                                return response()->json([
+                                    'isError'   => false,
+                                    'message'   => 'Đã thêm thành viên vào lớp học'
+                                ]);
+                            }
+                        } else {
                             return response()->json([
                                 'isError'   => true,
-                                'message'   => 'Thành viên này đã ở trong phòng học'
-                            ]);
-                        } else {
-                            $arrayStudent = Arr::prepend($arrayStudent, $request->email);
-
-                            $ClassRoom->update([
-                                'data'  => json_encode($arrayStudent)
-                            ]);
-                            return response()->json([
-                                'isError'   => false,
-                                'message'   => 'Đã thêm thành viên vào lớp học'
+                                'message'   => 'Bạn không phải chủ phòng học này'
                             ]);
                         }
                     } else {
                         return response()->json([
                             'isError'   => true,
-                            'message'   => 'Bạn không phải chủ phòng học này'
+                            'message'   => 'Không tìm thấy phòng học'
                         ]);
                     }
                 } else {
                     return response()->json([
                         'isError'   => true,
-                        'message'   => 'Không tìm thấy phòng học'
+                        'message' => 'Bạn không thể thực hiện hành động này'
                     ]);
                 }
             } else {
                 return response()->json([
                     'isError'   => true,
-                    'message' => 'Bạn không thể thực hiện hành động này'
+                    'message'   => 'Thành viên này không tồn tại'
                 ]);
             }
         }
