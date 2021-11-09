@@ -31,16 +31,20 @@ Route::prefix('auth')->middleware(['guest'])->group(function () {
 Route::middleware(['auth:api'])->group(function () {
     Route::get('user', [UserController::class, 'UserInfo'])->name('userInfo');
     Route::prefix('classRoom')->group(function () {
+
         Route::prefix('schedule')->group(function () {
             Route::get('get/{idClass}', [ScheduleController::class, 'get'])->name('classRoom.schedule.get');
+            Route::post('create', [ScheduleController::class, 'create'])->name('classRoom.schedule.create');
+            Route::get('delete/{idClass}', [ScheduleController::class, 'delete'])->name('classRoom.schedule.create');
         });
-        Route::get('list', [ClassRoomController::class, 'index'])->name('classRoom.index');
+
+        Route::get('list', [ClassRoomController::class, 'getList'])->name('classRoom.index');
         Route::get('join/{idClass}', [ClassRoomController::class, 'join'])->name('classRoom.join');
         Route::get('leave/{idClass}', [ClassRoomController::class, 'leave'])->name('classRoom.leave');
         Route::post('add', [ClassRoomController::class, 'invite'])->name('classRoom.invite');
         Route::post('kick', [ClassRoomController::class, 'kick'])->name('classRoom.kick');
         Route::post('create', [ClassRoomController::class, 'create'])->name('classRoom.create');
-        Route::delete('delete', [ClassRoomController::class, 'delete'])->name('classRoom.delete');
+        Route::get('delete/{idClass}', [ClassRoomController::class, 'delete'])->name('classRoom.delete');
         Route::get('show/{idClass}', [ClassRoomController::class, 'show'])->name('classRoom.show');
     });
 });

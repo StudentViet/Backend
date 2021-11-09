@@ -30,7 +30,7 @@ class ClassRoomController extends Controller
         }
     }
 
-    public function index()
+    public function getList()
     {
         $arrayClassRoom = [];
         $ClassRoom = new ClassRoom();
@@ -105,15 +105,17 @@ class ClassRoomController extends Controller
                         $arrayStudent[] = $row;
                     }
                 }
+                $idClass = \Illuminate\Support\Str::uuid();
                 $ClassRoom = new ClassRoom;
-                $ClassRoom->idClass = \Illuminate\Support\Str::uuid();
+                $ClassRoom->idClass = $idClass;
                 $ClassRoom->userId = Auth::user()->id;
                 $ClassRoom->name = $request->name;
                 $ClassRoom->data = json_encode($arrayStudent);
                 $ClassRoom->save();
                 return response()->json([
                     'isError' => false,
-                    'message' => 'Tạo phòng học thành công'
+                    'message' => 'Tạo phòng học thành công',
+                    'idClass' => $idClass
                 ]);
             } else {
                 return response()->json([
@@ -327,7 +329,7 @@ class ClassRoomController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function delete($id)
     {
         if (!$id) {
             return response()->json([
