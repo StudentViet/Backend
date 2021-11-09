@@ -18,4 +18,14 @@ class UserController extends Controller
             ],
         ]);
     }
+
+    public function logout(Request $request)
+    {
+        $user = $request->user()->token();
+        $user->revoke();
+        return response()->json([
+            'isError'  => false,
+            'message'  => 'Đăng xuất thành công'
+        ]);
+    }
 }

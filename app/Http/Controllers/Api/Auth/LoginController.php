@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class LoginController extends Controller
 {
@@ -29,6 +30,8 @@ class LoginController extends Controller
 
             if (Auth::attempt([$fieldType => $request->user, 'password' => $request->password])) {
                 $token = $request->user()->createToken('Access Token');
+                $token->expires_at = Carbon::now()->addDays(30);
+                $token->save();
                 return response()->json([
                     'isError' => false,
                     'message' => 'Đăng nhập thành công',
