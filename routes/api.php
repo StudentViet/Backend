@@ -29,6 +29,7 @@ Route::prefix('auth')->middleware(['guest'])->group(function () {
 });
 
 Route::middleware(['auth:api'])->group(function () {
+    Route::post('logout', [UserController::class, 'logout'])->name('auth.logout');
     Route::get('user', [UserController::class, 'UserInfo'])->name('userInfo');
     Route::prefix('classRoom')->group(function () {
 
