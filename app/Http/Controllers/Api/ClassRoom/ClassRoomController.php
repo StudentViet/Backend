@@ -12,29 +12,40 @@ use App\Models\User;
 
 class ClassRoomController extends Controller
 {
-    public function index()
+
+    protected function CheckExists($email, $idClass)
     {
-        if (Auth::user()->role_id == 1) {
-            $ClassRoom = ClassRoom::where([
-                'userId'    => Auth::user()->id
-            ]);
-            if ($ClassRoom->count() > 0) {
-                return response()->json([
-                    'isError'   => false,
-                    'data'      => $ClassRoom->first()
-                ]);
-            } else {
-                return response()->json([
-                    'isError'   => true,
-                    'message'   => 'Không tìm thấy phòng học'
-                ]);
+        $ClassRoom = ClassRoom::where('idClass', $idClass);
+        if ($ClassRoom->count() > 0) {
+            foreach ($ClassRoom->get() as $row) {
+                $arrayStudent = json_decode($row->data, true);
+                if (in_array($email, $arrayStudent)) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         } else {
-            return response()->json([
-                'isError'   => true,
-                'message' => 'Bạn không thể thực hiện hành động này'
-            ]);
+            return false;
         }
+    }
+
+    public function index()
+    {
+        $arrayClassRoom = [];
+        $ClassRoom = new ClassRoom();
+        $count = 0;
+        foreach ($ClassRoom->get() as $row) {
+            if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
+                $arrayClassRoom = Arr::prepend($arrayClassRoom, $row);
+                $count++;
+            }
+        }
+        return response()->json([
+            'isError'   => $count != 0 ? false : true,
+            'message'   => $count != 0 ? 'Lấy danh sách phòng học thành công' : 'Bạn chưa tham gia phòng học nào',
+            'data'      => $count != 0 ? $arrayClassRoom : []
+        ]);
     }
 
     public function join($idClass)
@@ -87,11 +98,18 @@ class ClassRoomController extends Controller
             ]);
         } else {
             if (Auth::user()->role_id == 1) {
+                $arrayStudent = [Auth::user()->email];
+                $data = json_decode($request->data, true);
+                if ($data != []) {
+                    foreach ($data as $row) {
+                        $arrayStudent[] = $row;
+                    }
+                }
                 $ClassRoom = new ClassRoom;
                 $ClassRoom->idClass = \Illuminate\Support\Str::uuid();
                 $ClassRoom->userId = Auth::user()->id;
                 $ClassRoom->name = $request->name;
-                $ClassRoom->data = $request->data != NULL ? $request->data : json_encode([]);
+                $ClassRoom->data = json_encode($arrayStudent);
                 $ClassRoom->save();
                 return response()->json([
                     'isError' => false,
