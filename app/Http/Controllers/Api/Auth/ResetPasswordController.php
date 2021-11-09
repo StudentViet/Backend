@@ -59,4 +59,28 @@ class ResetPasswordController extends Controller
             }
         }
     }
+
+    public function check($token)
+    {
+        if (!$token) {
+            return response()->json([
+                'isError'   => true,
+                'message'   => 'Thiếu dữ liệu gửi lên'
+            ]);
+        } else {
+            if (DB::table('password_resets')->where([
+                'token' => $token,
+            ])->count() > 0) {
+                return response()->json([
+                    'isError'   => false,
+                    'message'   => 'Token đã tồn tại'
+                ]);
+            } else {
+                return response()->json([
+                    'isError'   => true,
+                    'message'   => 'Token không tồn tại'
+                ]);
+            }
+        }
+    }
 }
