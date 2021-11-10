@@ -167,6 +167,7 @@ return [
         'idClass'               => 'tên phòng học',
         'nameExercise'          => 'tên bài tập',
         'nameClass'             => 'tên lớp học',
-        'file'                  => 'tệp bài tập'
+        'file'                  => 'tệp bài tập',
+        'idExam'                => 'mã bài tập'
     ],
 ];

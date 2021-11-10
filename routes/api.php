@@ -32,6 +32,7 @@ Route::prefix('auth')->middleware(['guest'])->group(function () {
 Route::middleware(['auth:api'])->group(function () {
     Route::post('logout', [UserController::class, 'logout'])->name('auth.logout');
     Route::get('user', [UserController::class, 'UserInfo'])->name('userInfo');
+    Route::get('searchByEmail/{email}', [UserController::class, 'searchByEmail'])->name('searchByEmail');
     Route::prefix('classRoom')->group(function () {
 
         Route::prefix('schedule')->group(function () {
@@ -46,6 +47,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('show/{idExam}', [ExamController::class, 'show'])->name('classRoom.exam.show');
             Route::get('delete/{idExam}', [ExamController::class, 'delete'])->name('classRoom.exam.delete');
             Route::get('downloadFile/{filename}', [ExamController::class, 'downloadFile'])->name('classRoom.exam.downloadfile');
+            Route::post('sendExercise', [ExamController::class, 'sendExercise'])->name('classRoom.exam.sendExercise');
         });
 
         Route::get('list', [ClassRoomController::class, 'getList'])->name('classRoom.index');

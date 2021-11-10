@@ -19,6 +19,31 @@ class UserController extends Controller
         ]);
     }
 
+    public function searchByEmail($email)
+    {
+        if (!$email) {
+            return response()->json([
+                'isError'   => true,
+                'message'   => 'Thiếu dữ liệu gửi lên'
+            ]);
+        } else {
+            if (User::whereEmail($email)->count() > 0) {
+                return response()->json([
+                    'isError'   => false,
+                    'message'   => 'Lấy thông tin thành công',
+                    'data'      => [
+                        'name'  => User::whereEmail($email)->first()->name
+                    ],
+                ]);
+            } else {
+                return response()->json([
+                    'isError'   => true,
+                    'message'   => 'Email không tồn tại'
+                ]);
+            }
+        }
+    }
+
     public function logout(Request $request)
     {
         $user = $request->user()->token();

@@ -30,8 +30,6 @@ class LoginController extends Controller
 
             if (Auth::attempt([$fieldType => $request->user, 'password' => $request->password])) {
                 $token = $request->user()->createToken('Access Token');
-                $token->expires_at = Carbon::now()->addDays(30);
-                $token->save();
                 return response()->json([
                     'isError' => false,
                     'message' => 'Đăng nhập thành công',

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use App\Models\ClassRoom;
+use App\Models\ListExercises;
 use App\Models\Exam;
 use Carbon\Carbon;
 
@@ -67,6 +68,141 @@ class ExamController extends Controller
                 'message'   => $arrayExam != [] ? 'Lấy danh sách bài tập thành công' : 'Hiện tại chưa có bài tập nào',
                 'data'      => $arrayExam != [] ? $arrayExam : [],
             ]);
+        }
+    }
+
+    public function cancelSendExercise(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'idExam'   => 'required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'isError' => true,
+                'message' => $validator->errors()->first()
+            ]);
+        } else {
+            $Exam = Exam::where('idExam', $request->idExam);
+            if ($Exam->count() > 0) {
+                if ($this->CheckExists(Auth::user()->email, $Exam->first()->idClass)) {
+                    if (Auth::user()->role_id != 1) {
+                        if (Carbon::now()->lessThan($Exam->first()->expires_at)) {
+
+                            $ListExercises = ListExercises::where([
+                                'idExam'    => $request->idExam,
+                                'email'     => Auth::user()->email,
+                            ]);
+
+                            if ($ListExercises->count() > 0) {
+
+                                return response()->json([
+                                    'isError'   => true,
+                                    'message'   => 'Bạn đã nộp bài tâp này từ trước rồi'
+                                ]);
+                            } else {
+                                $ListExercises->submitted = false;
+                                $ListExercises->save();
+                                return response()->json([
+                                    'isError'   => false,
+                                    'message'   => 'Hoàn tác nộp bài thành công'
+                                ]);
+                            }
+                        } else {
+                            return response()->json([
+                                'isError'   => true,
+                                'message'   => 'Đã quá thời hạn nộp bài'
+                            ]);
+                        }
+                    } else {
+                        return response()->json([
+                            'isError'   => true,
+                            'message'   => 'Giáo viên không thể thực hiện'
+                        ]);
+                    }
+                } else {
+                    return response()->json([
+                        'isError'   => true,
+                        'message'   => 'Bạn chưa tham gia phòng học này'
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'isError'   => true,
+                    'message'   => 'Bài tập này không tòn tại'
+                ]);
+            }
+        }
+    }
+
+    public function delExerciseFile(Request $request)
+    {
+    }
+
+    public function sendExercise(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'idExam'   => 'required|string|max:255',
+            'file'  => 'required|mimes:doc,docx,pdf,txt|max:2048',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'isError' => true,
+                'message' => $validator->errors()->first()
+            ]);
+        } else {
+            $Exam = Exam::where('idExam', $request->idExam);
+            if ($Exam->count() > 0) {
+                if ($this->CheckExists(Auth::user()->email, $Exam->first()->idClass)) {
+                    if (Auth::user()->role_id != 1) {
+                        if (Carbon::now()->lessThan($Exam->first()->expires_at)) {
+                            if ($request->file('file')) {
+                                $ListExercises = new ListExercises;
+                                if ($ListExercises->where([
+                                    'idExam'    => $request->idExam,
+                                    'email'     => Auth::user()->email,
+                                ])->count() <= 0) {
+                                    $ListExercises->idExam = $request->idExam;
+                                    $filename = \Illuminate\Support\Str::random(8) . '_' . str_replace(' ', '', $request->file('file')->getClientOriginalName());
+                                    $request->file('file')->storeAs('documents/answer', $filename);
+                                    $ListExercises->fileUrl = $filename;
+                                    $ListExercises->email = Auth::user()->email;
+                                    $ListExercises->submitted = true;
+                                    $ListExercises->save();
+                                    return response()->json([
+                                        'isError'   => false,
+                                        'message'   => 'Nộp bài tập thành công'
+                                    ]);
+                                } else {
+                                    return response()->json([
+                                        'isError'   => true,
+                                        'message'   => 'Bạn đã nộp bài tâp này từ trước rồi'
+                                    ]);
+                                }
+                            }
+                        } else {
+                            return response()->json([
+                                'isError'   => true,
+                                'message'   => 'Đã quá thời hạn nộp bài'
+                            ]);
+                        }
+                    } else {
+                        return response()->json([
+                            'isError'   => true,
+                            'message'   => 'Giáo viên không thể làm bài'
+                        ]);
+                    }
+                } else {
+                    return response()->json([
+                        'isError'   => true,
+                        'message'   => 'Bạn chưa tham gia phòng học này'
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'isError'   => true,
+                    'message'   => 'Bài tập này không tòn tại'
+                ]);
+            }
         }
     }
 

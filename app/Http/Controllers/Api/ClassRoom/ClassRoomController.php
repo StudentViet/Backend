@@ -34,33 +34,24 @@ class ClassRoomController extends Controller
     {
         $arrayClassRoom = [];
         $arrayStudent = [];
+        $arrayInfoStudent = [];
         $ClassRoom = new ClassRoom();
-        $count = 0;
         foreach ($ClassRoom->get() as $row) {
             if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
-                $data = json_decode($row->data, true);
-                $arrayStudent[$data[$count]] = [
-                    'name'  => User::whereEmail($data[$count])->first()->name,
-                    'email' => User::whereEmail($data[$count])->first()->email,
-                ];
-                $count++;
+                $arrayStudent[$row->idClass] = Arr::prepend($arrayStudent, json_decode($row->data, true));
             }
         }
-
-        $count = 0;
         foreach ($ClassRoom->get() as $row) {
             if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
                 unset($row['data']);
+                $row['data']    = $arrayStudent[$row->idClass][0];
                 $arrayClassRoom = Arr::prepend($arrayClassRoom, $row);
-
-                $count++;
             }
         }
-        $arrayClassRoom = Arr::prepend($arrayClassRoom, ['data' => $arrayStudent]);
         return response()->json([
-            'isError'   => $count != 0 ? false : true,
-            'message'   => $count != 0 ? 'Lấy danh sách phòng học thành công' : 'Bạn chưa tham gia phòng học nào',
-            'data'      => $count != 0 ? $arrayClassRoom : []
+            'isError'   => $arrayClassRoom != [] ? false : true,
+            'message'   => $arrayClassRoom != [] ? 'Lấy danh sách phòng học thành công' : 'Bạn chưa có phòng học nào',
+            'data'      => $arrayClassRoom != [] ? $arrayClassRoom : []
         ]);
     }
 
