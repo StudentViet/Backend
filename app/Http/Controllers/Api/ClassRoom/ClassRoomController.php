@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ClassRoom;
+use App\Models\Exam;
 use App\Models\User;
 
 class ClassRoomController extends Controller
@@ -34,17 +35,26 @@ class ClassRoomController extends Controller
     {
         $arrayClassRoom = [];
         $arrayStudent = [];
-        $arrayInfoStudent = [];
+        $array = [];
+        $count = 0;
         $ClassRoom = new ClassRoom();
         foreach ($ClassRoom->get() as $row) {
             if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
-                $arrayStudent[$row->idClass] = Arr::prepend($arrayStudent, json_decode($row->data, true));
+                foreach (json_decode($row->data, true) as $rowData) {
+                    $arrayStudent[$row->idClass][] = [
+                        'name'  => User::whereEmail($rowData)->first()->name,
+                        'email' => User::whereEmail($rowData)->first()->email,
+                    ];
+                }
+
+                $count++;
             }
         }
         foreach ($ClassRoom->get() as $row) {
             if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
                 unset($row['data']);
-                $row['data']    = $arrayStudent[$row->idClass][0];
+                $row['data']    = $arrayStudent[$row->idClass];
+                $row['exercises'] = Exam::where('idClass', $row->idClass)->count();
                 $arrayClassRoom = Arr::prepend($arrayClassRoom, $row);
             }
         }
@@ -109,7 +119,9 @@ class ClassRoomController extends Controller
                 $data = json_decode($request->data, true);
                 if ($data != []) {
                     foreach ($data as $row) {
-                        $arrayStudent[] = $row;
+                        if (isset($row)) {
+                            $arrayStudent[] = $row;
+                        }
                     }
                 }
                 $idClass = \Illuminate\Support\Str::uuid();
@@ -196,8 +208,8 @@ class ClassRoomController extends Controller
                 'message' => $validator->errors()->first()
             ]);
         } else {
-            if (User::whereEmail('email', $request->email)->count() > 0) {
-                if (Auth::user()->role_admin == 1) {
+            if (User::where('email', $request->email)->count() > 0) {
+                if (Auth::user()->role_id == 1) {
                     $ClassRoom = ClassRoom::where('idClass', $request->idClass);
                     if ($ClassRoom->count() > 0) {
                         if ($ClassRoom->where('userId', Auth::user()->id)->count() > 0) {
@@ -261,7 +273,7 @@ class ClassRoomController extends Controller
             ]);
         } else {
 
-            if (Auth::user()->role_admin == 1) {
+            if (Auth::user()->role_id == 1) {
                 $ClassRoom = ClassRoom::where('idClass', $request->idClass);
                 if ($ClassRoom->count() > 0) {
                     if ($ClassRoom->where('userId', Auth::user()->id)->count() > 0) {
@@ -274,13 +286,15 @@ class ClassRoomController extends Controller
                             ]);
                         } else {
                             $i = 0;
+
                             foreach ($arrayStudent as $key => $value) {
-                                if ($value == Auth::user()->email) {
-                                    unset($arrayStudent[$i]);
+                                if ($value == $request->email) {
+                                    unset($arrayStudent[$key]);
                                     break;
                                 }
                                 $i++;
                             }
+
                             $ClassRoom->update([
                                 'data'  => json_encode($arrayStudent)
                             ]);
@@ -318,25 +332,48 @@ class ClassRoomController extends Controller
                 'message'    => 'Thiếu dữ liệu gửi lên'
             ]);
         } else {
-            if (Auth::user()->role_id == 1) {
-                $ClassRoom = ClassRoom::where([
-                    'id'    => $id
-                ]);
-                if ($ClassRoom->count() > 0) {
-                    return response()->json([
-                        'isError'   => false,
-                        'data'      => $ClassRoom->first()
-                    ]);
-                } else {
-                    return response()->json([
-                        'isError'   => true,
-                        'message'   => 'Không tìm thấy phòng học'
-                    ]);
+            $ClassRoom = ClassRoom::where([
+                'idClass'    => $id
+            ]);
+            if ($this->CheckExists(Auth::user()->email, $id)) {
+                $arrayStudent = [];
+                $arrayClassRoom = [];
+                $arrayExam = [];
+                foreach ($ClassRoom->get() as $row) {
+                    if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
+                        foreach (json_decode($row->data, true) as $rowData) {
+                            $arrayStudent[$row->idClass][] = [
+                                'name'  => User::whereEmail($rowData)->first()->name,
+                                'email' => User::whereEmail($rowData)->first()->email,
+                            ];
+                        }
+                    }
                 }
+                if (Exam::where('idClass', $id)->count() > 0) {
+                    foreach (Exam::where('idClass', $id)->get() as $rowExam) {
+                        if ($rowExam->idClass == $id) {
+                            $arrayExam = Arr::prepend($arrayExam, $rowExam);
+                        }
+                    }
+                }
+
+                foreach ($ClassRoom->get() as $row) {
+                    if ($this->CheckExists(Auth::user()->email, $row->idClass)) {
+                        unset($row['data']);
+                        $row['data']    = $arrayStudent[$row->idClass];
+                        $row['exercises'] = $arrayExam;
+                        $arrayClassRoom = Arr::prepend($arrayClassRoom, $row);
+                    }
+                }
+                return response()->json([
+                    'isError'   => $arrayClassRoom != [] ? false : true,
+                    'message'   => $arrayClassRoom != [] ? 'Lấy danh sách phòng học thành công' : 'Bạn chưa có phòng học nào',
+                    'data'      => $arrayClassRoom != [] ? $arrayClassRoom : []
+                ]);
             } else {
                 return response()->json([
                     'isError'   => true,
-                    'message' => 'Bạn không thể thực hiện hành động này'
+                    'message'   => 'Bạn chưa tham gia phòng học này'
                 ]);
             }
         }

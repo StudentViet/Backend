@@ -16,9 +16,12 @@ class CreateListExercisesTable extends Migration
         Schema::create('list_exercises', function (Blueprint $table) {
             $table->id();
             $table->string('idExam');
-            $table->string('fileUrl');
+            $table->json('fileUrl')->nullable();
             $table->string('email');
             $table->boolean('submitted');
+            $table->integer('point')->nullable();
+            $table->longText('description')->nullable();
+            $table->timestamp('thoigiannop')->nullable();
             $table->timestamps();
         });
     }

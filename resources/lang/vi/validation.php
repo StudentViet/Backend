@@ -166,7 +166,7 @@ return [
         'user'                  => 'tên người dùng',
         'idClass'               => 'tên phòng học',
         'nameExercise'          => 'tên bài tập',
-        'nameClass'             => 'tên lớp học',
+        'nameClass'             => 'tên phòng học',
         'file'                  => 'tệp bài tập',
         'idExam'                => 'mã bài tập'
     ],

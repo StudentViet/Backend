@@ -45,7 +45,14 @@ return [
         'document' => [
             'driver' => 'local',
             'root' => storage_path('app/documents'),
-            'url' => env('APP_URL') . '/storage',
+            'url' => env('APP_URL') . '/storage/app/documents',
+            'visibility' => 'public',
+        ],
+
+        'answer' => [
+            'driver' => 'local',
+            'root' => storage_path('app/documents/answer'),
+            'url' => env('APP_URL') . '/storage/app/documents/answer',
             'visibility' => 'public',
         ],
 
