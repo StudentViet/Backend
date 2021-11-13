@@ -196,7 +196,7 @@ class ExamController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'idExam'   => 'required|string|max:255',
-            'file'  => 'required|mimes:doc,docx,pdf,txt,png,jpg,gif,tiff,bmp,psd|max:2048|unique:list_exercises',
+            'file'  => 'required|mimes:doc,docx,pdf,txt,png,jpg,gif,tiff,bmp,psd|max:2048',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -232,27 +232,37 @@ class ExamController extends Controller
                                         $ListExercises->update([
                                             'fileUrl'   => json_encode($arrayFile)
                                         ]);
+
+                                        $request->file('file')->storeAs(
+                                            'answer',
+                                            $file_name,
+                                            'document'
+                                        );
+
+                                        return response()->json([
+                                            'isError' => false,
+                                            'message' => 'Tải file bài tập lên thành công'
+                                        ]);
                                     }
                                 }
                             } else {
-                                $ListExercises->idExam = $request->idExam;
-                                $ListExercises->fileUrl = json_encode($file_name);
-                                $ListExercises->email = Auth::user()->email;
-                                $ListExercises->submitted = false;
-                                $ListExercises->save();
+                                $ListExercises->create([
+                                    'idExam'    => $request->idExam,
+                                    'fileUrl'   => json_encode([$file_name]),
+                                    'email'     => Auth::user()->email,
+                                    'submitted' => false
+                                ]);
+                                $request->file('file')->storeAs(
+                                    'answer',
+                                    $file_name,
+                                    'document'
+                                );
+
+                                return response()->json([
+                                    'isError' => false,
+                                    'message' => 'Tải file bài tập lên thành công'
+                                ]);
                             }
-
-
-                            $request->file('file')->storeAs(
-                                'answer',
-                                $file_name,
-                                'document'
-                            );
-
-                            return response()->json([
-                                'isError' => false,
-                                'message' => 'Tải file bài tập lên thành công'
-                            ]);
                         }
                     } else {
 
@@ -364,9 +374,10 @@ class ExamController extends Controller
                         if (Carbon::now()->lessThan($Exam->first()->expires_at)) {
                             $ListExercises = ListExercises::where('idExam', $request->idExam)->where('email', Auth::user()->email);
                             if ($ListExercises->count() > 0) {
-                                $ListExercises->submitted = true;
-                                $ListExercises->thoigiannop = now();
-                                $ListExercises->save();
+                                $ListExercises->update([
+                                    'submitted' => true,
+                                    'thoigiannop' => now()
+                                ]);
                                 return response()->json([
                                     'isError'   => false,
                                     'message'   => 'Nộp bài thành công'
@@ -408,7 +419,7 @@ class ExamController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nameExercise'  => 'required|string|max:255',
-            'file'  => 'required|mimes:doc,docx,pdf,txt|max:2048',
+            'file'  => 'required|mimes:doc,docx,pdf,txt,png,gif,jpg,tiff,bmp|max:2048',
             'idClass'   => 'required|max:255',
             'expires_at' => 'required|date'
         ]);
@@ -419,64 +430,70 @@ class ExamController extends Controller
             ]);
         } else {
             $classRoom = new ClassRoom;
-            if ($classRoom->where('idClass', $request->idClass)->count() > 0) {
-                if (Auth::user()->role_id == 1) {
-                    if ($classRoom->where('userId', Auth::user()->id)->count() > 0) {
-                        if ($request->file('file')) {
-                            $Exam = new Exam;
-                            $idExam = \Illuminate\Support\Str::uuid();
-                            if ($Exam->where('idExam', $idExam)->count() > 0) {
+            $count = count(explode(',', trim($request->idClass)));
+            $i = 0;
+            foreach (explode(',', trim($request->idClass)) as $rowClass) {
+                if ($classRoom->where('idClass', $rowClass)->count() > 0) {
+                    if (Auth::user()->role_id == 1) {
+                        if ($classRoom->where('userId', Auth::user()->id)->count() > 0) {
+                            if ($request->file('file')) {
+                                $Exam = new Exam;
                                 $idExam = \Illuminate\Support\Str::uuid();
+                                if ($Exam->where('idExam', $idExam)->count() > 0) {
+                                    $idExam = \Illuminate\Support\Str::uuid();
+                                }
+                                $filename = \Illuminate\Support\Str::random(8) . '_' . str_replace(' ', '', $request->file('file')->getClientOriginalName());
+                                $request->file('file')->storeAs('documents', $filename);
+                                $Exam->name = $request->nameExercise;
+                                $Exam->idClass = $rowClass;
+                                $Exam->idExam = $idExam;
+                                $Exam->fileUrl = $filename;
+                                $Exam->expires_at = $request->expires_at;
+                                $Exam->save();
+                                $i++;
+                                if ($count == $i) {
+                                    return response()->json([
+                                        'isError'   => false,
+                                        'message'   => 'Tạo bài tập thành công'
+                                    ]);
+                                }
                             }
-                            $filename = \Illuminate\Support\Str::random(8) . '_' . str_replace(' ', '', $request->file('file')->getClientOriginalName());
-                            $request->file('file')->storeAs('documents', $filename);
-                            $Exam->name = $request->nameExercise;
-                            $Exam->idClass = $request->idClass;
-                            $Exam->idExam = $idExam;
-                            $Exam->fileUrl = $filename;
-                            $Exam->expires_at = $request->expires_at;
-                            $Exam->save();
+                        } else {
                             return response()->json([
-                                'isError'   => false,
-                                'message'   => 'Tạo bài tập thành công'
+                                'isError'   => true,
+                                'message'   => 'Bạn không phải chủ phòng học này'
                             ]);
                         }
                     } else {
                         return response()->json([
-                            'isError'   => true,
-                            'message'   => 'Bạn không phải chủ phòng học này'
+                            'isError' => true,
+                            'message' => 'Bạn không thể thực hiện hành động này'
                         ]);
                     }
                 } else {
-                    return response()->json([
-                        'isError' => true,
-                        'message' => 'Bạn không thể thực hiện hành động này'
+                    return response()->Json([
+                        'isError'   => true,
+                        'message'   => 'Phòng học này không tồn tại'
                     ]);
                 }
-            } else {
-                return response()->Json([
-                    'isError'   => true,
-                    'message'   => 'Phòng học này không tồn tại'
-                ]);
             }
         }
     }
 
     public function downloadFile($filename)
     {
-        $file_path = storage_path('app/documents') . "/" . $filename;
-
-        return Response::download($file_path);
+        // $file = Storage::disk('document')->path($filename);
+        // return response()->download($file);
     }
 
     public function show($idClass)
     {
-        $Exam = new Exam;
-        $classRoom = new ClassRoom;
-        if ($Exam->where('idClass', $idClass)->count() > 0) {
-            $Exam = Exam::where('idExam', $idClass);
-            if ($classRoom->where('idClass', $idClass)->count() > 0) {
-                if ($this->CheckExists(Auth::user()->email, $Exam->first()->idClass)) {
+
+        if (ClassRoom::where('idClass', $idClass)->count() > 0) {
+
+            if (Exam::where(['idClass' => $idClass])->count() > 0) {
+                $Exam = Exam::where('idClass', $idClass);
+                if ($this->CheckExists(Auth::user()->email, $idClass)) {
                     if (Auth::user()->role_id == 1) {
                         return response()->json([
                             'isError'   => false,
@@ -506,19 +523,78 @@ class ExamController extends Controller
             } else {
                 return response()->json([
                     'isError'   => true,
-                    'message'   => 'Phòng học này không tồn tại'
+                    'message'   => 'Bài tập này không tồn tại'
                 ]);
             }
         } else {
+
             return response()->json([
                 'isError'   => true,
-                'message'   => 'Bài tập này không tồn tại'
+                'message'   => 'Phòng học này không tồn tại'
             ]);
+        }
+    }
+
+    public function listStudentDoExercise($idExam)
+    {
+        if (!$idExam) {
+            return response()->json([
+                'isError'   => true,
+                'message'   => 'Thiếu thông tin gửi lên'
+            ]);
+        } else {
+            $Exam = new Exam;
+            $classRoom = new ClassRoom;
+            if ($Exam->where('idExam', $idExam)->count() > 0) {
+                $Exam = $Exam->where('idExam', $idExam);
+                $classRoom = $classRoom->where('idClass', $Exam->first()->idClass);
+                if ($classRoom->count() > 0) {
+                    if ($classRoom->first()->userId == Auth::user()->id) {
+                        $ListExercises = ListExercises::where('idExam', $idExam);
+                        $array = [];
+                        foreach ($ListExercises->get() as $row) {
+                            $arrayFile = json_decode($row->fileUrl, true);
+                            $data = [
+                                'name'  => \App\Models\User::whereEmail($row->email)->first()->name,
+                                'email' => $row->email,
+                                'file'  => $arrayFile
+                            ];
+                            $array = Arr::prepend($array, $data);
+                        }
+                        return response()->json([
+                            'isError'   => false,
+                            'message'   => 'Lấy danh sách học sinh làm bài thành công',
+                            'data'      => $array
+                        ]);
+                    } else {
+                        return response()->json([
+                            'isError'   => true,
+                            'message'   => 'Bạn không phải chủ phòng học này'
+                        ]);
+                    }
+                } else {
+                    return response()->json([
+                        'isError'   => true,
+                        'message'   => 'Phòng học không tồn tại'
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'isError'   => true,
+                    'message'   => 'Bài tập này không tồn tại'
+                ]);
+            }
         }
     }
 
     public function delete($idExam)
     {
+        if (!$idExam) {
+            return response()->json([
+                'isError'   => true,
+                'message'   => 'Thiếu thông tin gửi lên'
+            ]);
+        }
         $Exam = new Exam;
         $classRoom = new ClassRoom;
         if ($Exam->where('idExam', $idExam)->count() > 0) {

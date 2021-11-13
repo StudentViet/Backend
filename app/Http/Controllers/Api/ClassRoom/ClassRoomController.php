@@ -35,7 +35,6 @@ class ClassRoomController extends Controller
     {
         $arrayClassRoom = [];
         $arrayStudent = [];
-        $array = [];
         $count = 0;
         $ClassRoom = new ClassRoom();
         foreach ($ClassRoom->get() as $row) {

@@ -46,6 +46,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('show/{idExam}', [ExamController::class, 'show'])->name('classRoom.exam.show');
             Route::get('delete/{idExam}', [ExamController::class, 'delete'])->name('classRoom.exam.delete');
             Route::get('downloadFile/{filename}', [ExamController::class, 'downloadFile'])->name('classRoom.exam.downloadfile');
+            Route::get('listStudent/{idExam}', [ExamController::class, 'listStudentDoExercise'])->name('classRoom.exam.listStudentDoExercise');
             Route::post('returnExercise', [ExamController::class, 'returnExercise'])->name('classRoom.exam.returnExercise');
             Route::post('sendExercise', [ExamController::class, 'sendExercise'])->name('classRoom.exam.sendExercise');
             Route::post('file/delete', [ExamController::class, 'deletefile'])->name('classRoom.exam.deleteFile');

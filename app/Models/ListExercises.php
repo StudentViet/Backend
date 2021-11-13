@@ -12,6 +12,9 @@ class ListExercises extends Model
     protected $fillable = [
         'email',
         'idExam',
-        'fileUrl'
+        'fileUrl',
+        'submitted',
+        'point',
+        'description'
     ];
 }
