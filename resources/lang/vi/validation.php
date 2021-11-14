@@ -138,7 +138,6 @@ return [
         'content'               => 'nội dung',
         'country'               => 'quốc gia',
         'date'                  => 'ngày',
-        'day'                   => 'ngày',
         'description'           => 'mô tả',
         'email'                 => 'email',
         'excerpt'               => 'trích dẫn',
@@ -157,7 +156,6 @@ return [
         'second'                => 'giây',
         'sex'                   => 'giới tính',
         'size'                  => 'kích thước',
-        'subject'               => 'tiêu đề',
         'time'                  => 'thời gian',
         'title'                 => 'tiêu đề',
         'username'              => 'tên đăng nhập',
@@ -168,6 +166,10 @@ return [
         'nameExercise'          => 'tên bài tập',
         'nameClass'             => 'tên phòng học',
         'file'                  => 'tệp bài tập',
-        'idExam'                => 'mã bài tập'
+        'idExam'                => 'mã bài tập',
+        'day'                   => 'ngày học',
+        'lesson'                => 'tiết học',
+        'subject'               => 'môn học',
+        'link'                  => 'liên kết lớp học'
     ],
 ];

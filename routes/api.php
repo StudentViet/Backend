@@ -36,7 +36,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::prefix('classRoom')->group(function () {
 
         Route::prefix('schedule')->group(function () {
-            Route::get('get/{idClass}', [ScheduleController::class, 'get'])->name('classRoom.schedule.get');
             Route::post('create', [ScheduleController::class, 'create'])->name('classRoom.schedule.create');
             Route::get('delete/{idClass}', [ScheduleController::class, 'delete'])->name('classRoom.schedule.create');
         });
@@ -46,8 +45,10 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('show/{idExam}', [ExamController::class, 'show'])->name('classRoom.exam.show');
             Route::get('delete/{idExam}', [ExamController::class, 'delete'])->name('classRoom.exam.delete');
             Route::get('downloadFile/{filename}', [ExamController::class, 'downloadFile'])->name('classRoom.exam.downloadfile');
+            Route::get('downloadFileExercise/{filename}', [ExamController::class, 'downloadFileExercise'])->name('classRoom.exam.downloadFileExercise');
             Route::get('listStudent/{idExam}', [ExamController::class, 'listStudentDoExercise'])->name('classRoom.exam.listStudentDoExercise');
             Route::post('returnExercise', [ExamController::class, 'returnExercise'])->name('classRoom.exam.returnExercise');
+            Route::post('cancelSendExercise', [ExamController::class, 'cancelSendExercise'])->name('classRoom.exam.cancelExercise');
             Route::post('sendExercise', [ExamController::class, 'sendExercise'])->name('classRoom.exam.sendExercise');
             Route::post('file/delete', [ExamController::class, 'deletefile'])->name('classRoom.exam.deleteFile');
             Route::post('file/upload', [ExamController::class, 'uploadFile'])->name('classRoom.exam.uploadFile');

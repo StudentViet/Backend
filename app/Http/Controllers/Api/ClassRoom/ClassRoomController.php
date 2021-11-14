@@ -361,6 +361,7 @@ class ClassRoomController extends Controller
                         unset($row['data']);
                         $row['data']    = $arrayStudent[$row->idClass];
                         $row['exercises'] = $arrayExam;
+                        $row['schedule'] = \App\Models\Schedule::where('idClass', $row->idClass)->first();
                         $arrayClassRoom = Arr::prepend($arrayClassRoom, $row);
                     }
                 }
@@ -388,7 +389,7 @@ class ClassRoomController extends Controller
         } else {
             if (Auth::user()->role_id == 1) {
                 $ClassRoom = ClassRoom::where([
-                    'id'    => $id
+                    'idClass'    => $id
                 ]);
                 if ($ClassRoom->count() > 0) {
                     $ClassRoom->delete();

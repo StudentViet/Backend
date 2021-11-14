@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Mail\OfferMail;
-use Exception;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -31,7 +30,9 @@ class ForgotController extends Controller
                 $token = Str::random(128);
                 $offer = [
                     'url' => config('app.url') . '/auth/reset-password/' . $token,
-                    'name'  => User::whereEmail($request->email)->first()->name
+                    'content'   => '# Chào ' . User::whereEmail($request->email)->first()->name . '
+                    bên ' . config('app.name') . ' bọn mình vừa nhận được yêu cầu lấy lại mật khẩu từ phía bạn phải không ? <br/>
+                    <small><b>Nếu không phải do bạn thực hiện hãy bỏ qua email này nhé.</b></small>'
                 ];
                 DB::table('password_resets')->insert([
                     'email' => $request->email,

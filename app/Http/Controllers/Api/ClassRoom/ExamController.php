@@ -8,8 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Response;
 use App\Models\ClassRoom;
 use App\Models\ListExercises;
 use App\Models\Exam;
@@ -85,10 +83,8 @@ class ExamController extends Controller
                                     'message'   => 'Không thể hoàn tác do bạn chưa nộp bài'
                                 ]);
                             } else {
-                                $ListExercises->update([
-                                    'submitted' => false,
-                                    'thoigiannop' => NULL,
-                                ]);
+                                Storage::disk('answer')->delete($ListExercises->first()->fileUrl);
+                                $ListExercises->delete();
                                 return response()->json([
                                     'isError'   => false,
                                     'message'   => 'Hoàn tác nộp bài thành công'
@@ -482,8 +478,13 @@ class ExamController extends Controller
 
     public function downloadFile($filename)
     {
-        // $file = Storage::disk('document')->path($filename);
-        // return response()->download($file);
+        $file = Storage::disk('document')->path($filename);
+        return response()->download($file);
+    }
+
+    public function downloadFileExercise($filename)
+    {
+        return response()->download(Storage::disk('answer')->path($filename));
     }
 
     public function show($idClass)
@@ -502,10 +503,20 @@ class ExamController extends Controller
                         ]);
                     } else {
                         if (Carbon::now()->lessThan($Exam->first()->expires_at)) {
+                            $ListExercises = ListExercises::where('idExam', $Exam->first()->idExam)->where('email', Auth::user()->email);
+                            $arraySubmitted = [];
+                            $arrayExercise = [];
+                            foreach ($ListExercises->get() as $row) {
+                                $arraySubmitted[$row->idExam] = $row->submitted == "1" ? true : false;
+                            }
+                            foreach ($Exam->get() as $row) {
+                                $row['submitted'] = $arraySubmitted != [] ? $arraySubmitted[$row->idExam] : false;
+                                $arrayExercise[] = $row;
+                            }
                             return response()->json([
                                 'isError'   => false,
-                                'message'   => 'Lấy bài tập thành công',
-                                'data'      => $Exam->first()
+                                'message'   => 'Lấy danh sách bài tập thành công',
+                                'data'      => $arrayExercise
                             ]);
                         } else {
                             return response()->json([
@@ -543,10 +554,9 @@ class ExamController extends Controller
                 'message'   => 'Thiếu thông tin gửi lên'
             ]);
         } else {
-            $Exam = new Exam;
             $classRoom = new ClassRoom;
-            if ($Exam->where('idExam', $idExam)->count() > 0) {
-                $Exam = $Exam->where('idExam', $idExam);
+            if (Exam::where('idExam', $idExam)->count() > 0) {
+                $Exam = Exam::where('idExam', $idExam);
                 $classRoom = $classRoom->where('idClass', $Exam->first()->idClass);
                 if ($classRoom->count() > 0) {
                     if ($classRoom->first()->userId == Auth::user()->id) {

@@ -30,53 +30,15 @@ class ScheduleController extends Controller
         }
     }
 
-    public function get($idClass)
-    {
-        if (!$idClass) {
-            return response()->json([
-                'isError'   => true,
-                'message'   => 'Không thể tìm thấy phòng học bạn tìm'
-            ]);
-        } else {
-            $classRoom = ClassRoom::where('idClass', $idClass);
-            if ($classRoom->count() > 0) {
-
-                if (!$this->CheckExists(Auth::user()->email, $idClass)) {
-                    return response()->json([
-                        'isError'   => true,
-                        'message'   => 'Bạn chưa tham gia phòng học này'
-                    ]);
-                } else {
-                    if (Schedule::where('idClass', $idClass)->count() > 0) {
-                        return response()->json([
-                            'isError'   => false,
-                            'message'   => 'Lấy thông tin thời khóa biểu thành công',
-                            'data'      => [
-                                'idSchedule' => Schedule::where('idClass', $idClass)->first()->idSchedule,
-                                Schedule::where('idClass', $idClass)->first()->data
-                            ]
-                        ]);
-                    } else {
-                        return response()->json([
-                            'isError'   => true,
-                            'message'   => 'Phòng học này chưa có thời khóa biểu'
-                        ]);
-                    }
-                }
-            } else {
-                return response()->json([
-                    'isError'   => true,
-                    'message'   => 'Không tìm thấy phòng học'
-                ]);
-            }
-        }
-    }
-
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|max:255',
-            'data' => 'required|json'
+            'idClass'   => 'required|string|max:255',
+            'period'    => 'required|integer|max:1',
+            'subject'   => 'required|string|max:255',
+            'time'      => 'required',
+            'link'      => 'required|url|max:255',
+            'day'       => 'required|integer|max:1'
         ]);
 
         if ($validator->fails()) {
@@ -91,10 +53,13 @@ class ScheduleController extends Controller
                 if (Auth::user()->role_id == 1) {
                     if ($classRoom->where('userId', Auth::user()->id)->count() > 0) {
                         $Schedule = new Schedule;
-                        $Schedule->name = $request->name;
                         $Schedule->idClass = $request->idClass;
                         $Schedule->idSchedule = \Illuminate\Support\Str::uuid();
-                        $Schedule->data = $request->data != NULL ? $request->data : json_encode([]);
+                        $Schedule->period = $request->period;
+                        $Schedule->subject = $request->subject;
+                        $Schedule->time = $request->time;
+                        $Schedule->link = $request->link;
+                        $Schedule->day = $request->day;
                         $Schedule->save();
                         return response()->json([
                             'isError'   => false,
@@ -119,211 +84,17 @@ class ScheduleController extends Controller
                 ]);
             }
         }
-        // return response()->json([
-        //     'thu2'  => [
-        //         [
-        //             'tiet'      => 1,
-        //             'monhoc'    => 'Ngữ Văn',
-        //             'time'      => '7h30 - 8h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 2,
-        //             'monhoc'    => 'Toán',
-        //             'time'      => '8h15 - 9h',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 3,
-        //             'monhoc'    => 'Sử',
-        //             'time'      => '9h - 9h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 4,
-        //             'monhoc'    => 'Anh Văn',
-        //             'time'      => '9h15 - 9h25',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 5,
-        //             'monhoc'    => 'Ngủ',
-        //             'time'      => '9h25 - 13h35',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //     ],
-        //     'thu3'  => [
-        //         [
-        //             'tiet'      => 1,
-        //             'monhoc'    => 'Ngữ Văn',
-        //             'time'      => '7h30 - 8h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 2,
-        //             'monhoc'    => 'Toán',
-        //             'time'      => '8h15 - 9h',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 3,
-        //             'monhoc'    => 'Sử',
-        //             'time'      => '9h - 9h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 4,
-        //             'monhoc'    => 'Anh Văn',
-        //             'time'      => '9h15 - 9h25',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 5,
-        //             'monhoc'    => 'Ngủ',
-        //             'time'      => '9h25 - 13h35',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //     ],
-        //     'thu4'  => [
-        //         [
-        //             'tiet'      => 1,
-        //             'monhoc'    => 'Ngữ Văn',
-        //             'time'      => '7h30 - 8h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 2,
-        //             'monhoc'    => 'Toán',
-        //             'time'      => '8h15 - 9h',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 3,
-        //             'monhoc'    => 'Sử',
-        //             'time'      => '9h - 9h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 4,
-        //             'monhoc'    => 'Anh Văn',
-        //             'time'      => '9h15 - 9h25',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 5,
-        //             'monhoc'    => 'Ngủ',
-        //             'time'      => '9h25 - 13h35',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //     ],
-        //     'thu5'  => [
-        //         [
-        //             'tiet'      => 1,
-        //             'monhoc'    => 'Ngữ Văn',
-        //             'time'      => '7h30 - 8h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 2,
-        //             'monhoc'    => 'Toán',
-        //             'time'      => '8h15 - 9h',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 3,
-        //             'monhoc'    => 'Sử',
-        //             'time'      => '9h - 9h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 4,
-        //             'monhoc'    => 'Anh Văn',
-        //             'time'      => '9h15 - 9h25',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 5,
-        //             'monhoc'    => 'Ngủ',
-        //             'time'      => '9h25 - 13h35',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //     ],
-        //     'thu6'  => [
-        //         [
-        //             'tiet'      => 1,
-        //             'monhoc'    => 'Ngữ Văn',
-        //             'time'      => '7h30 - 8h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 2,
-        //             'monhoc'    => 'Toán',
-        //             'time'      => '8h15 - 9h',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 3,
-        //             'monhoc'    => 'Sử',
-        //             'time'      => '9h - 9h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 4,
-        //             'monhoc'    => 'Anh Văn',
-        //             'time'      => '9h15 - 9h25',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 5,
-        //             'monhoc'    => 'Ngủ',
-        //             'time'      => '9h25 - 13h35',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //     ],
-        //     'thu7'  => [
-        //         [
-        //             'tiet'      => 1,
-        //             'monhoc'    => 'Ngữ Văn',
-        //             'time'      => '7h30 - 8h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 2,
-        //             'monhoc'    => 'Toán',
-        //             'time'      => '8h15 - 9h',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 3,
-        //             'monhoc'    => 'Sử',
-        //             'time'      => '9h - 9h15',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 4,
-        //             'monhoc'    => 'Anh Văn',
-        //             'time'      => '9h15 - 9h25',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //         [
-        //             'tiet'      => 5,
-        //             'monhoc'    => 'Ngủ',
-        //             'time'      => '9h25 - 13h35',
-        //             'link'      => 'https://gooogle.com'
-        //         ],
-        //     ],
-        // ]);
     }
 
-    public function delete($id)
+    public function delete($idClass)
     {
-        if (!$id) {
+        if (!$idClass) {
             return response()->json([
                 'isError'   => true,
                 'message'   => 'Không tìm thấy phòng học'
             ]);
         } else {
-            $classRoom = ClassRoom::where('id', $id);
+            $classRoom = ClassRoom::where('idClass', $idClass);
             if ($classRoom->count() > 0) {
                 if (Auth::user()->role_id == 1) {
                     if ($classRoom->where('userId', Auth::user()->id)->count() > 0) {
